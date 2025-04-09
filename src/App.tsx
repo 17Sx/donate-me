@@ -217,6 +217,9 @@ const App: React.FC = () => {
             </div>
           </div>
         </header>
+        <footer className="App-footer">
+          <p>Made with <span role="img" aria-label="love">❤️</span> by <a href="https://github.com/17Sx" target="_blank" rel="noopener noreferrer">17Sx</a></p>
+        </footer>
       </div>
     );
   }
@@ -317,6 +320,9 @@ const App: React.FC = () => {
           )}
         </div>
       </header>
+      <footer className="App-footer">
+        <p>Made with <span role="img" aria-label="love">❤️</span> for crypto</p>
+      </footer>
     </div>
   );
 };
