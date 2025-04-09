@@ -15,6 +15,8 @@ const App: React.FC = () => {
   const [customLink, setCustomLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isEthereumAddress, setIsEthereumAddress] = useState(false);
+  const [selectedERC20Token, setSelectedERC20Token] = useState('eth');
 
   useEffect(() => {
     // Vérifier la préférence système au chargement
@@ -27,17 +29,101 @@ const App: React.FC = () => {
     document.body.className = isDarkMode ? 'dark-theme' : 'light-theme';
   }, [isDarkMode]);
 
+  const getCurrencyIcon = (currency: string | null) => {
+    if (!currency) return null;
+    try {
+      // Vérifier d'abord dans le dossier des icônes disponibles
+      const icon = require(`cryptocurrency-icons/svg/white/${currency}.svg`);
+      return <img src={icon} alt={currency.toUpperCase()} className="currency-icon" />;
+    } catch (e) {
+      // Utiliser une icône générique ou alternative si l'icône n'est pas disponible
+      console.warn(`Icon for ${currency} not found in cryptocurrency-icons package`);
+      try {
+        const genericIcon = require(`cryptocurrency-icons/svg/white/generic.svg`);
+        return <img src={genericIcon} alt={currency.toUpperCase()} className="currency-icon" />;
+      } catch (e) {
+        return null;
+      }
+    }
+  };
+
   const detectCurrency = (address: string) => {
     const trimmedAddress = address.trim();
+    
+    // Bitcoin (BTC)
     if (trimmedAddress.startsWith('1') || trimmedAddress.startsWith('3') || trimmedAddress.startsWith('bc1')) {
       return 'btc';
-    } else if (trimmedAddress.startsWith('0x')) {
-      return 'eth';
-    } else if (trimmedAddress.startsWith('L') || trimmedAddress.startsWith('M')) {
+    } 
+    // Sui (SUI)
+    else if (trimmedAddress.startsWith('0x') && trimmedAddress.length === 66) {
+      return 'sui';
+    }
+    // Ethereum (ETH) et tokens ERC-20/BEP-20
+    else if (trimmedAddress.startsWith('0x') && trimmedAddress.length === 42) {
+      setIsEthereumAddress(true);
+      return selectedERC20Token; // Retourne le token sélectionné par l'utilisateur
+    } 
+    // Litecoin (LTC)
+    else if (trimmedAddress.startsWith('L') || trimmedAddress.startsWith('M') || trimmedAddress.startsWith('ltc1')) {
       return 'ltc';
-    } else if (trimmedAddress.startsWith('solana:') || trimmedAddress.length === 44) {
+    } 
+    // Solana (SOL)
+    else if (trimmedAddress.startsWith('solana:') || (trimmedAddress.length === 44 && /^[1-9A-HJ-NP-Za-km-z]{44}$/.test(trimmedAddress))) {
       return 'sol';
     }
+    // Monad (MONAD) - Assumant que les adresses commencent par 'monad:' ou 'mn1'
+    else if (trimmedAddress.startsWith('monad:') || trimmedAddress.startsWith('mn1')) {
+      return 'monad';
+    }
+    // Ripple (XRP)
+    else if (trimmedAddress.startsWith('r') && trimmedAddress.length >= 25 && trimmedAddress.length <= 35) {
+      return 'xrp';
+    }
+    // Binance Coin (BNB)
+    else if (trimmedAddress.startsWith('bnb')) {
+      return 'bnb';
+    }
+    // Cardano (ADA)
+    else if (trimmedAddress.startsWith('addr1') || trimmedAddress.startsWith('DdzFF')) {
+      return 'ada';
+    }
+    // Dogecoin (DOGE)
+    else if (trimmedAddress.startsWith('D') && trimmedAddress.length >= 33 && trimmedAddress.length <= 34) {
+      return 'doge';
+    }
+    // Polkadot (DOT)
+    else if (trimmedAddress.startsWith('1') && trimmedAddress.length >= 45 && trimmedAddress.length <= 48) {
+      return 'dot';
+    }
+    // Tron (TRX)
+    else if (trimmedAddress.startsWith('T') && trimmedAddress.length === 34) {
+      return 'trx';
+    }
+    // Bitcoin Cash (BCH)
+    else if (trimmedAddress.startsWith('q') || trimmedAddress.startsWith('p') || trimmedAddress.startsWith('bitcoincash:')) {
+      return 'bch';
+    }
+    // Monero (XMR)
+    else if (trimmedAddress.startsWith('4') && trimmedAddress.length >= 95) {
+      return 'xmr';
+    }
+    // Stellar (XLM)
+    else if (trimmedAddress.startsWith('G') && trimmedAddress.length === 56) {
+      return 'xlm';
+    }
+    // Avalanche (AVAX)
+    else if (trimmedAddress.startsWith('X-avax')) {
+      return 'avax';
+    }
+    // Cosmos (ATOM)
+    else if (trimmedAddress.startsWith('cosmos')) {
+      return 'atom';
+    }
+    // Chainlink (LINK) - utilise le format ETH
+    // Uniswap (UNI) - utilise le format ETH
+    // Aave (AAVE) - utilise le format ETH
+    // Tous ces tokens utilisent des adresses Ethereum, donc détectés comme ETH
+    
     return null;
   };
 
@@ -57,6 +143,7 @@ const App: React.FC = () => {
       setDetectedCurrency('');
       setCustomLink('');
       setIsValid(false);
+      setIsEthereumAddress(false);
     }
   };
 
@@ -64,6 +151,13 @@ const App: React.FC = () => {
     const address = e.target.value;
     setWalletAddress(address);
     validateAddress(address);
+  };
+
+  const handleTokenChange = (token: string) => {
+    setSelectedERC20Token(token);
+    if (walletAddress.trim()) {
+      setDetectedCurrency(token);
+    }
   };
 
   const copyToClipboard = () => {
@@ -76,16 +170,6 @@ const App: React.FC = () => {
   const isDonatePage = window.location.pathname.startsWith('/donate/');
   const donateAddress = isDonatePage ? decodeURIComponent(window.location.pathname.split('/donate/')[1]) : '';
   const donateCurrency = isDonatePage ? detectCurrency(donateAddress) : '';
-
-  const getCurrencyIcon = (currency: string | null) => {
-    if (!currency) return null;
-    try {
-      const icon = require(`cryptocurrency-icons/svg/white/${currency}.svg`);
-      return <img src={icon} alt={currency.toUpperCase()} className="currency-icon" />;
-    } catch (e) {
-      return null;
-    }
-  };
 
   if (isDonatePage) {
     return (
@@ -163,6 +247,44 @@ const App: React.FC = () => {
               success={isValid}
             />
           </div>
+          
+          {isEthereumAddress && (
+            <div className="token-selector">
+              <p>Choisissez votre token :</p>
+              <div className="token-buttons">
+                <Button
+                  onClick={() => handleTokenChange('eth')}
+                  variant={selectedERC20Token === 'eth' ? 'success' : 'primary'}
+                >
+                  ETH
+                </Button>
+                <Button
+                  onClick={() => handleTokenChange('matic')}
+                  variant={selectedERC20Token === 'matic' ? 'success' : 'primary'}
+                >
+                  MATIC
+                </Button>
+                <Button
+                  onClick={() => handleTokenChange('bnb')}
+                  variant={selectedERC20Token === 'bnb' ? 'success' : 'primary'}
+                >
+                  BNB
+                </Button>
+                <Button
+                  onClick={() => handleTokenChange('base')}
+                  variant={selectedERC20Token === 'base' ? 'success' : 'primary'}
+                >
+                  BASE
+                </Button>
+                <Button
+                  onClick={() => handleTokenChange('usdt')}
+                  variant={selectedERC20Token === 'usdt' ? 'success' : 'primary'}
+                >
+                  USDT
+                </Button>
+              </div>
+            </div>
+          )}
           
           {isValid && customLink && (
             <div className="result-container success">
