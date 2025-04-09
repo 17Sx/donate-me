@@ -24,7 +24,56 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
+    <title>Donate me</title>
+    <script>
+      const phrases = [
+        "Donate Me - Support with Crypto",
+        "Accept Bitcoin, Ethereum, Solana",
+        "Create your crypto donation page",
+        "Share your wallet address easily",
+        "Support your favorite creators ;)",
+      ];
+      
+      let currentPhraseIndex = 0;
+      let currentCharIndex = 0;
+      let isDeleting = false;
+      let typingSpeed = 150; 
+      let pauseEnd = 1500;   
+      let pauseDelete = 500; 
+      
+      function typeEffect() {
+        const currentPhrase = phrases[currentPhraseIndex];
+        
+        if (isDeleting) {
+          document.title = currentPhrase.substring(0, currentCharIndex) + "▌";
+          currentCharIndex--;
+          typingSpeed = 50; 
+          
+          if (currentCharIndex < 0) {
+            isDeleting = false;
+            currentPhraseIndex = (currentPhraseIndex + 1) % phrases.length;
+            typingSpeed = pauseDelete; 
+          }
+        } else {
+          document.title = currentPhrase.substring(0, currentCharIndex) + "▌";
+          currentCharIndex++;
+          
+          typingSpeed = 100 + Math.random() * 100;
+          
+          if (currentCharIndex > currentPhrase.length) {
+            document.title = currentPhrase; 
+            isDeleting = true;
+            typingSpeed = pauseEnd; 
+          }
+        }
+        
+        setTimeout(typeEffect, typingSpeed);
+      }
+      
+      window.onload = function() {
+        setTimeout(typeEffect, 1000);
+      };
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
