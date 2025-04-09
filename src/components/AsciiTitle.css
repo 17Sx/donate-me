@@ -1,0 +1,21 @@
+.ascii-title {
+  color: #9b51e0;
+  font-family: monospace;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(155, 81, 224, 0.5);
+  white-space: pre;
+  overflow: hidden;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 10px rgba(155, 81, 224, 0.5);
+  }
+  to {
+    text-shadow: 0 0 20px rgba(155, 81, 224, 0.8),
+                 0 0 30px rgba(155, 81, 224, 0.6);
+  }
+} 
