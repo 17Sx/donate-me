@@ -4,6 +4,8 @@ import Button from './components/Button';
 import AsciiTitle from './components/AsciiTitle';
 import ThemeIcon from './components/ThemeIcon';
 import { QRCodeSVG } from 'qrcode.react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
 import './App.css';
 
 const App: React.FC = () => {
@@ -118,7 +120,7 @@ const App: React.FC = () => {
                 variant={copied ? 'success' : 'primary'}
                 className={copied ? 'copied' : ''}
               >
-                {copied ? 'Copied!' : 'Copy'}
+                <FontAwesomeIcon icon={copied ? faCheck : faCopy} />
               </Button>
             </div>
             <div className="qr-code-container">
@@ -177,7 +179,7 @@ const App: React.FC = () => {
                     variant={copied ? 'success' : 'primary'}
                     className={copied ? 'copied' : ''}
                   >
-                    {copied ? 'Copied!' : 'Copy'}
+                    <FontAwesomeIcon icon={copied ? faCheck : faCopy} />
                   </Button>
                 </div>
               </div>
