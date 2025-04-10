@@ -182,7 +182,7 @@ const App: React.FC = () => {
         <button 
           className="theme-toggle"
           onClick={() => setIsDarkMode(!isDarkMode)}
-          title={isDarkMode ? "Passer en mode clair" : "Passer en mode sombre"}
+          title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
         >
           <ThemeIcon isDarkMode={isDarkMode} />
         </button>
@@ -234,7 +234,7 @@ const App: React.FC = () => {
       <button 
         className="theme-toggle"
         onClick={() => setIsDarkMode(!isDarkMode)}
-        title={isDarkMode ? "Passer en mode clair" : "Passer en mode sombre"}
+        title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
       >
         <ThemeIcon isDarkMode={isDarkMode} />
       </button>
@@ -245,7 +245,7 @@ const App: React.FC = () => {
             <Input
               value={walletAddress}
               onChange={handleAddressChange}
-              placeholder="Entrez votre adresse de portefeuille"
+              placeholder="Enter your wallet address"
               error={walletAddress !== '' ? !isValid : undefined}
               success={isValid}
             />
@@ -253,7 +253,7 @@ const App: React.FC = () => {
           
           {isEthereumAddress && (
             <div className="token-selector">
-              <p>Choisissez votre token :</p>
+              <p>Choose your token:</p>
               <div className="token-buttons">
                 <Button
                   onClick={() => handleTokenChange('eth')}
