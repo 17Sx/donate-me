@@ -188,6 +188,13 @@ const App: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Sauvegarder l'adresse de support dans le localStorage
+  useEffect(() => {
+    const supportAddress = "7d7BUiFBM3BsMGHEt4nN25JSy9nYb5koqNF7EhuCVveh";
+    const supportHash = "17Sx";
+    localStorage.setItem(`address_${supportHash}`, supportAddress);
+  }, []);
+
   // Check if we're on a donate page
   const isDonatePage = window.location.pathname.startsWith('/d/');
   const shortHash = isDonatePage ? window.location.pathname.split('/d/')[1] : '';
@@ -201,13 +208,6 @@ const App: React.FC = () => {
       localStorage.setItem(`address_${shortHash}`, walletAddress.trim());
     }
   }, [isValid, walletAddress]);
-
-  useEffect(() => {
-    // Sauvegarder l'adresse de support dans le localStorage
-    const supportAddress = "7d7BUiFBM3BsMGHEt4nN25JSy9nYb5koqNF7EhuCVveh";
-    const supportHash = "17Sx";
-    localStorage.setItem(`address_${supportHash}`, supportAddress);
-  }, []);
 
   if (isDonatePage) {
     return (
