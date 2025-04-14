@@ -191,7 +191,7 @@ const App: React.FC = () => {
   // Sauvegarder l'adresse de support dans le localStorage
   useEffect(() => {
     const supportAddress = "7d7BUiFBM3BsMGHEt4nN25JSy9nYb5koqNF7EhuCVveh";
-    const supportHash = "17Sx";
+    const supportHash = "Sx";
     localStorage.setItem(`address_${supportHash}`, supportAddress);
   }, []);
 
@@ -270,7 +270,7 @@ const App: React.FC = () => {
           <div key={i} className="particle" />
         ))}
       </div>
-      <a href="/d/17Sx" className="support-link">wanna support</a>
+      <a href="/d/Sx" className="support-link">wanna support</a>
       <button 
         className="theme-toggle"
         onClick={() => setIsDarkMode(!isDarkMode)}
