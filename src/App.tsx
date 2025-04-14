@@ -3,14 +3,30 @@ import Input from './components/Input';
 import Button from './components/Button';
 import { QRCodeSVG } from 'qrcode.react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faCheck, faPlus, faTrash, faArrowRight, faTimes, faExclamationTriangle, faLink } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faCheck, faPlus, faTrash, faArrowRight, faTimes, faExclamationTriangle, faLink, faWallet, faShield } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from './lib/supabase';
 import './App.css';
 
 interface Wallet {
   address: string;
   currency: string;
+  verified?: boolean;
 }
+
+// Type pour Phantom Window
+interface PhantomWindow extends Window {
+  phantom?: {
+    solana?: {
+      connect: () => Promise<{ publicKey: { toString: () => string } }>;
+      disconnect: () => Promise<void>;
+      isConnected: boolean;
+      on?: (event: string, callback: () => void) => void;
+      off?: (event: string, callback: () => void) => void;
+    }
+  }
+}
+
+declare const window: PhantomWindow;
 
 const App: React.FC = () => {
   const [walletAddress, setWalletAddress] = useState('');
@@ -25,12 +41,50 @@ const App: React.FC = () => {
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [creationSuccess, setCreationSuccess] = useState<string | null>(null);
+  const [isCheckingWallet, setIsCheckingWallet] = useState(false);
+  const [isPhantomConnected, setIsPhantomConnected] = useState(false);
+  const [verifiedWallet, setVerifiedWallet] = useState<string | null>(null);
   
   // Example wallets for demo
   const exampleWallets: Wallet[] = [
-    { address: '7d7BUiFBM3BsMGHEt4nN25JSy9nYb5koqNF7EhuCVveh', currency: 'sol' },
+    { address: '7d7BUiFBM3BsMGHEt4nN25JSy9nYb5koqNF7EhuCVveh', currency: 'sol', verified: true },
     { address: 'bc1pr7x9k4artm0ejslkg2zfw4u4dhseeg0nl496f8gjazpfsskelfhsxl7ytj', currency: 'btc' }
   ];
+
+  // Vérifier si Phantom est disponible
+  useEffect(() => {
+    const checkPhantomAvailability = () => {
+      const isPhantomInstalled = window.phantom?.solana !== undefined;
+      
+      if (isPhantomInstalled && window.phantom?.solana) {
+        // Utiliser une approche plus sûre avec TypeScript
+        const provider = window.phantom.solana;
+        
+        // Essayons d'écouter les événements de manière sécurisée
+        try {
+          // @ts-ignore - Les méthodes on/off existent bien mais ne sont pas dans les types
+          provider.on('connect', () => {
+            setIsPhantomConnected(true);
+          });
+          
+          // @ts-ignore - Les méthodes on/off existent bien mais ne sont pas dans les types  
+          provider.on('disconnect', () => {
+            setIsPhantomConnected(false);
+            setVerifiedWallet(null);
+          });
+        } catch (error) {
+          console.error('Erreur lors de la configuration des événements Phantom:', error);
+        }
+        
+        // Check si déjà connecté
+        if (provider.isConnected) {
+          setIsPhantomConnected(true);
+        }
+      }
+    };
+    
+    checkPhantomAvailability();
+  }, []);
 
   // Check Supabase connection on component mount
   useEffect(() => {
@@ -137,9 +191,86 @@ const App: React.FC = () => {
   const donateAddress = isDonatePage 
     ? shortAddresses[shortHash.toLowerCase()] || '' 
     : '';
+  
+  // Vérifier si un wallet existe déjà dans la base
+  const checkWalletExists = async (address: string): Promise<boolean> => {
+    if (!isSupabaseConnected) return false;
     
-  const addWallet = () => {
+    try {
+      setIsCheckingWallet(true);
+      
+      const { data, error } = await supabase
+        .from('custom_links')
+        .select('slug')
+        .contains('wallets', [{ address }]);
+        
+      if (error) {
+        console.error('Error checking wallet:', error);
+        return false;
+      }
+      
+      return data && data.length > 0;
+    } catch (err) {
+      console.error('Error checking if wallet exists:', err);
+      return false;
+    } finally {
+      setIsCheckingWallet(false);
+    }
+  };
+  
+  // Connecter avec Phantom
+  const connectWithPhantom = async () => {
+    try {
+      if (!window.phantom?.solana) {
+        setErrorMessage("Phantom wallet n'est pas installé. Veuillez l'installer pour continuer.");
+        return;
+      }
+      
+      const response = await window.phantom.solana.connect();
+      const publicKey = response.publicKey.toString();
+      setVerifiedWallet(publicKey);
+      setWalletAddress(publicKey);
+      
+      return publicKey;
+    } catch (error) {
+      console.error('Erreur lors de la connexion à Phantom:', error);
+      setErrorMessage("Impossible de se connecter à Phantom wallet.");
+      return null;
+    }
+  };
+  
+  // Vérification humain vs bot
+  const verifyHumanUser = (): boolean => {
+    // Vérifier le temps écoulé depuis la dernière création
+    const lastCreation = localStorage.getItem('last_link_creation');
+    const now = Date.now();
+    
+    if (lastCreation && (now - parseInt(lastCreation)) < 300000) { // 5 minutes
+      setErrorMessage("Veuillez attendre 5 minutes avant de créer un nouveau lien.");
+      return false;
+    }
+    
+    // Vérifier la complexité du slug
+    if (!/[a-zA-Z]/.test(customSlug) || !/[0-9]/.test(customSlug)) {
+      setErrorMessage("Le slug doit contenir au moins une lettre et un chiffre.");
+      return false;
+    }
+    
+    return true;
+  };
+    
+  const addWallet = async () => {
     if (walletAddress.trim()) {
+      setErrorMessage(null);
+      
+      // Vérifier si ce wallet est déjà utilisé
+      const exists = await checkWalletExists(walletAddress.trim());
+      
+      if (exists) {
+        setErrorMessage("Cette adresse de wallet est déjà utilisée dans un autre lien.");
+        return;
+      }
+      
       // Default to ETH if we can't determine the currency
       let walletCurrency = 'eth';
       
@@ -150,7 +281,15 @@ const App: React.FC = () => {
         walletCurrency = 'btc';
       }
       
-      setWallets([...wallets, { address: walletAddress.trim(), currency: walletCurrency }]);
+      // Vérifier si le wallet est vérifié
+      const isVerified = verifiedWallet === walletAddress.trim();
+      
+      setWallets([...wallets, { 
+        address: walletAddress.trim(), 
+        currency: walletCurrency,
+        verified: isVerified
+      }]);
+      
       setWalletAddress('');
     }
   };
@@ -189,6 +328,19 @@ const App: React.FC = () => {
       return;
     }
     
+    // Vérifications anti-bot et sécurité
+    if (!verifyHumanUser()) {
+      return;
+    }
+    
+    // Vérifier qu'au moins un wallet est vérifié
+    const hasVerifiedWallet = wallets.some(wallet => wallet.verified);
+    
+    if (!hasVerifiedWallet) {
+      setErrorMessage("Veuillez vérifier au moins un wallet avec Phantom pour continuer.");
+      return;
+    }
+    
     try {
       const { data, error } = await supabase
         .from('custom_links')
@@ -215,6 +367,9 @@ const App: React.FC = () => {
         return;
       }
 
+      // Enregistrer le timestamp de création
+      localStorage.setItem('last_link_creation', Date.now().toString());
+      
       const newLink = `${window.location.origin}/c/${customSlug}`;
       setCustomLink(newLink);
       setCreationSuccess(newLink);
@@ -328,6 +483,11 @@ const App: React.FC = () => {
                 <div className="currency-header">
                   <p>Wallet Address:</p>
                   {getCurrencyIcon(wallet.currency)}
+                  {wallet.verified && (
+                    <span className="verified-badge" title="Verified wallet">
+                      <FontAwesomeIcon icon={faShield} />
+                    </span>
+                  )}
                 </div>
                 <div className="link-box">
                   <code>{wallet.address}</code>
@@ -446,7 +606,7 @@ const App: React.FC = () => {
                       <Input
                         value={customSlug}
                         onChange={(e) => setCustomSlug(e.target.value)}
-                        placeholder="my-wallets"
+                        placeholder="my-wallets (ex: my-wallet-123)"
                         className={
                           isSlugAvailable === true ? 'slug-available' :
                           isSlugAvailable === false ? 'slug-unavailable' : ''
@@ -473,6 +633,24 @@ const App: React.FC = () => {
                   <div className="step-number">2</div>
                   <div className="step-content">
                     <h3>Add wallet addresses</h3>
+                    <div className="verification-section">
+                      <Button 
+                        onClick={connectWithPhantom}
+                        variant="primary"
+                        className="verify-wallet-button"
+                        disabled={isPhantomConnected && !!verifiedWallet}
+                      >
+                        <FontAwesomeIcon icon={faWallet} /> {isPhantomConnected ? 'Phantom connecté' : 'Connecter Phantom'}
+                      </Button>
+                      
+                      {verifiedWallet && (
+                        <div className="verified-wallet-info">
+                          <FontAwesomeIcon icon={faShield} className="verified-icon" />
+                          <span>Wallet vérifié: {verifiedWallet.slice(0, 6)}...{verifiedWallet.slice(-4)}</span>
+                        </div>
+                      )}
+                    </div>
+                    
                     {wallets.length > 0 && (
                       <div className="wallets-list">
                         {wallets.map((wallet, index) => (
@@ -480,6 +658,9 @@ const App: React.FC = () => {
                             <div className="wallet-info">
                               <span className="currency-tag">{wallet.currency.toUpperCase()}</span>
                               <span className="wallet-address">{wallet.address}</span>
+                              {wallet.verified && (
+                                <span className="verified-tag">Vérifié</span>
+                              )}
                             </div>
                             <Button
                               onClick={() => removeWallet(index)}
@@ -502,8 +683,14 @@ const App: React.FC = () => {
                         />
                       </div>
                       {walletAddress.trim() && (
-                        <Button onClick={addWallet} variant="success" className="pulse-button">
-                          <FontAwesomeIcon icon={faPlus} /> Add Wallet
+                        <Button 
+                          onClick={addWallet} 
+                          variant="success" 
+                          className="pulse-button"
+                          disabled={isCheckingWallet}
+                        >
+                          <FontAwesomeIcon icon={isCheckingWallet ? faCheck : faPlus} /> 
+                          {isCheckingWallet ? 'Vérification...' : 'Add Wallet'}
                         </Button>
                       )}
                     </div>
@@ -515,14 +702,21 @@ const App: React.FC = () => {
                   <div className="step-content">
                     <h3>Create your link</h3>
                     <p className="step-description">
-                      When ready, create your custom donation link that will display all your wallets.
+                      Au moins un wallet doit être vérifié via Phantom. Les liens sont limités à une création par 5 minutes.
                     </p>
                     
                     <Button 
                       onClick={createCustomLink} 
                       variant="primary" 
                       className="create-link-button glow-button"
-                      disabled={!isSupabaseConnected || wallets.length === 0 || !customSlug || customSlug.length < 3 || isSlugAvailable === false}
+                      disabled={
+                        !isSupabaseConnected || 
+                        wallets.length === 0 || 
+                        !customSlug || 
+                        customSlug.length < 3 || 
+                        isSlugAvailable === false ||
+                        !wallets.some(wallet => wallet.verified)
+                      }
                     >
                       <FontAwesomeIcon icon={faLink} /> Create Custom Link
                     </Button>
@@ -592,6 +786,11 @@ const App: React.FC = () => {
                       <div className="currency-header">
                         <p>Wallet Address:</p>
                         {getCurrencyIcon(wallet.currency)}
+                        {wallet.verified && (
+                          <span className="verified-badge" title="Verified wallet">
+                            <FontAwesomeIcon icon={faShield} />
+                          </span>
+                        )}
                       </div>
                       <div className="link-box">
                         <code>{wallet.address}</code>
