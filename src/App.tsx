@@ -145,7 +145,7 @@ const App: React.FC = () => {
       num = Math.floor(num / 62);
     } while (num > 0);
     
-    return result.substring(0, 1); // Limiter à 6 caractères
+    return result.substring(0, 6); // Limiter à 6 caractères
   };
 
   const validateAddress = (address: string) => {
