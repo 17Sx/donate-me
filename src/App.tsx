@@ -188,18 +188,30 @@ const App: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Sauvegarder l'adresse de support dans le localStorage
-  useEffect(() => {
-    const supportAddress = "7d7BUiFBM3BsMGHEt4nN25JSy9nYb5koqNF7EhuCVveh";
-    const supportHash = "Sx";
-    localStorage.setItem(`address_${supportHash}`, supportAddress);
-  }, []);
-
   // Check if we're on a donate page
   const isDonatePage = window.location.pathname.startsWith('/d/');
   const shortHash = isDonatePage ? window.location.pathname.split('/d/')[1] : '';
-  const donateAddress = isDonatePage ? localStorage.getItem(`address_${shortHash}`) || '' : '';
+  
+  // Adresse de support prédéfinie
+  const supportAddresses: { [key: string]: string } = {
+    'Sx': '7d7BUiFBM3BsMGHEt4nN25JSy9nYb5koqNF7EhuCVveh'
+  };
+
+  const donateAddress = isDonatePage 
+    ? supportAddresses[shortHash] || localStorage.getItem(`address_${shortHash}`) || '' 
+    : '';
   const donateCurrency = isDonatePage ? detectCurrency(donateAddress) : '';
+
+  // Sauvegarder l'adresse de support dans le localStorage (pour les navigateurs qui le supportent)
+  useEffect(() => {
+    try {
+      const supportAddress = "7d7BUiFBM3BsMGHEt4nN25JSy9nYb5koqNF7EhuCVveh";
+      const supportHash = "Sx";
+      localStorage.setItem(`address_${supportHash}`, supportAddress);
+    } catch (e) {
+      // Ignorer les erreurs de localStorage (navigation privée)
+    }
+  }, []);
 
   // Sauvegarder l'adresse dans le localStorage quand on génère un lien
   useEffect(() => {
