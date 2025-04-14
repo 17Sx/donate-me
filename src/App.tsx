@@ -202,6 +202,13 @@ const App: React.FC = () => {
     }
   }, [isValid, walletAddress]);
 
+  useEffect(() => {
+    // Sauvegarder l'adresse de support dans le localStorage
+    const supportAddress = "7d7BUiFBM3BsMGHEt4nN25JSy9nYb5koqNF7EhuCVveh";
+    const supportHash = "17Sx";
+    localStorage.setItem(`address_${supportHash}`, supportAddress);
+  }, []);
+
   if (isDonatePage) {
     return (
       <div className="App">
@@ -210,6 +217,7 @@ const App: React.FC = () => {
             <div key={i} className="particle" />
           ))}
         </div>
+        <a href="/d/17Sx" className="support-link">wanna support?</a>
         <button 
           className="theme-toggle"
           onClick={() => setIsDarkMode(!isDarkMode)}
@@ -262,6 +270,7 @@ const App: React.FC = () => {
           <div key={i} className="particle" />
         ))}
       </div>
+      <a href="/d/17Sx" className="support-link">wanna support</a>
       <button 
         className="theme-toggle"
         onClick={() => setIsDarkMode(!isDarkMode)}
