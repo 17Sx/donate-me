@@ -4,7 +4,72 @@
   <img src="https://raw.githubusercontent.com/17Sx/donate-me/main/public/favicon.ico" alt="Donate Me Logo" width="200"/>
 </p>
 
-A beautiful, modern crypto donation page generator that lets you easily create shareable links for receiving cryptocurrency donations.
+A modern crypto donation link generator with a sleek interface and support for multiple wallets.
+
+## Setup
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/yourusername/donate-me.git
+   cd donate-me
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env` file in the root of the project with your Supabase credentials:
+
+   ```bash
+   REACT_APP_SUPABASE_URL=https://your-project-id.supabase.co
+   REACT_APP_SUPABASE_ANON_KEY=your-anon-key
+   ```
+
+4. Set up your Supabase project:
+
+   - Create a new project on [Supabase](https://supabase.com)
+   - Create a table called `custom_links` with the following schema:
+     - `id`: uuid (primary key)
+     - `slug`: text (unique)
+     - `wallets`: jsonb
+     - `created_at`: timestamp with timezone
+
+5. Configure CORS in your Supabase project:
+
+   - Go to your Supabase project settings
+   - Navigate to API settings
+   - Add your application URL to the "Additional allowed origins" section (e.g., http://localhost:3000)
+
+6. Start the development server:
+
+   ```bash
+   npm start
+   ```
+
+## Features
+
+- Create shortened donation links for crypto wallets
+- Support for multiple cryptocurrency types
+- Custom slugs for personalized links
+- QR code generation for easy sharing
+- Modern glassmorphism UI with animations
+
+## Troubleshooting
+
+### CORS Errors
+
+If you encounter CORS errors when trying to connect to Supabase, make sure:
+
+1. Your Supabase URL and anon key are correctly set in the `.env` file
+2. Your application's origin is added to the allowed origins in Supabase's API settings
+3. You've restarted your development server after making changes to the `.env` file
+
+## License
+
+MIT
 
 ## 🚀 Features
 
