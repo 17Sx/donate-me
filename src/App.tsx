@@ -127,6 +127,27 @@ const App: React.FC = () => {
     return null;
   };
 
+  // Fonction pour générer un hash court
+  const generateShortHash = (address: string): string => {
+    let hash = 0;
+    for (let i = 0; i < address.length; i++) {
+      const char = address.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    // Utiliser base62 (0-9, a-z, A-Z) pour des identifiants plus courts
+    const base62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    let num = Math.abs(hash);
+    
+    do {
+      result = base62[num % 62] + result;
+      num = Math.floor(num / 62);
+    } while (num > 0);
+    
+    return result.substring(0, 1); // Limiter à 6 caractères
+  };
+
   const validateAddress = (address: string) => {
     if (address.trim()) {
       const currency = detectCurrency(address.trim());
@@ -135,7 +156,8 @@ const App: React.FC = () => {
 
       if (currency) {
         const baseUrl = window.location.origin;
-        setCustomLink(`${baseUrl}/donate/${encodeURIComponent(address.trim())}`);
+        const shortHash = generateShortHash(address.trim());
+        setCustomLink(`${baseUrl}/d/${shortHash}`);
       } else {
         setCustomLink('');
       }
@@ -167,9 +189,18 @@ const App: React.FC = () => {
   };
 
   // Check if we're on a donate page
-  const isDonatePage = window.location.pathname.startsWith('/donate/');
-  const donateAddress = isDonatePage ? decodeURIComponent(window.location.pathname.split('/donate/')[1]) : '';
+  const isDonatePage = window.location.pathname.startsWith('/d/');
+  const shortHash = isDonatePage ? window.location.pathname.split('/d/')[1] : '';
+  const donateAddress = isDonatePage ? localStorage.getItem(`address_${shortHash}`) || '' : '';
   const donateCurrency = isDonatePage ? detectCurrency(donateAddress) : '';
+
+  // Sauvegarder l'adresse dans le localStorage quand on génère un lien
+  useEffect(() => {
+    if (isValid && walletAddress.trim()) {
+      const shortHash = generateShortHash(walletAddress.trim());
+      localStorage.setItem(`address_${shortHash}`, walletAddress.trim());
+    }
+  }, [isValid, walletAddress]);
 
   if (isDonatePage) {
     return (
