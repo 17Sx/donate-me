@@ -1283,3 +1283,16 @@ input.slug-unavailable {
   margin-top: 0.5rem;
   animation: pulse 1.5s infinite;
 }
+
+.verification-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(99, 102, 241, 0.1);
+  border-left: 3px solid var(--primary-color);
+  border-radius: 4px;
+}

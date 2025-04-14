@@ -229,7 +229,9 @@ const App: React.FC = () => {
       const response = await window.phantom.solana.connect();
       const publicKey = response.publicKey.toString();
       setVerifiedWallet(publicKey);
-      setWalletAddress(publicKey);
+      
+      // Ajouter automatiquement le wallet connecté
+      addVerifiedWalletToList(publicKey);
       
       return publicKey;
     } catch (error) {
@@ -237,6 +239,35 @@ const App: React.FC = () => {
       setErrorMessage("Impossible de se connecter à Phantom wallet.");
       return null;
     }
+  };
+  
+  // Fonction pour ajouter des wallets vérifiés
+  const addVerifiedWalletToList = async (walletAddress: string) => {
+    if (!walletAddress) return;
+    
+    // Vérifier si ce wallet existe déjà dans la liste
+    const walletExists = wallets.some(wallet => wallet.address === walletAddress);
+    if (walletExists) return;
+    
+    // Vérifier si ce wallet est déjà utilisé dans un autre lien
+    const exists = await checkWalletExists(walletAddress);
+    
+    if (exists) {
+      setErrorMessage("Cette adresse de wallet est déjà utilisée dans un autre lien.");
+      return;
+    }
+    
+    // Ajouter le wallet à la liste
+    setWallets(prevWallets => [
+      ...prevWallets, 
+      { 
+        address: walletAddress, 
+        currency: 'sol', // Phantom est un wallet Solana
+        verified: true 
+      }
+    ]);
+    
+    setErrorMessage(null);
   };
   
   // Vérification humain vs bot
@@ -634,6 +665,9 @@ const App: React.FC = () => {
                   <div className="step-content">
                     <h3>Add wallet addresses</h3>
                     <div className="verification-section">
+                      <p className="verification-hint">
+                        <FontAwesomeIcon icon={faShield} /> Connectez-vous avec Phantom pour ajouter automatiquement vos wallets vérifiés
+                      </p>
                       <Button 
                         onClick={connectWithPhantom}
                         variant="primary"
@@ -646,7 +680,7 @@ const App: React.FC = () => {
                       {verifiedWallet && (
                         <div className="verified-wallet-info">
                           <FontAwesomeIcon icon={faShield} className="verified-icon" />
-                          <span>Wallet vérifié: {verifiedWallet.slice(0, 6)}...{verifiedWallet.slice(-4)}</span>
+                          <span>Wallet principal vérifié: {verifiedWallet.slice(0, 6)}...{verifiedWallet.slice(-4)}</span>
                         </div>
                       )}
                     </div>
