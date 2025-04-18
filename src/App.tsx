@@ -368,7 +368,7 @@ const App: React.FC = () => {
     const hasVerifiedWallet = wallets.some(wallet => wallet.verified);
     
     if (!hasVerifiedWallet) {
-      setErrorMessage("Veuillez vérifier au moins un wallet avec Phantom pour continuer.");
+      setErrorMessage("Please verify at least one wallet with Phantom to continue.");
       return;
     }
     
@@ -666,7 +666,7 @@ const App: React.FC = () => {
                     <h3>Add wallet addresses</h3>
                     <div className="verification-section">
                       <p className="verification-hint">
-                        <FontAwesomeIcon icon={faShield} /> Connectez-vous avec Phantom pour ajouter automatiquement vos wallets vérifiés
+                        <FontAwesomeIcon icon={faShield} /> Connect with Phantom to automatically add your verified wallets
                       </p>
                       <Button 
                         onClick={connectWithPhantom}
@@ -674,13 +674,13 @@ const App: React.FC = () => {
                         className="verify-wallet-button"
                         disabled={isPhantomConnected && !!verifiedWallet}
                       >
-                        <FontAwesomeIcon icon={faWallet} /> {isPhantomConnected ? 'Phantom connecté' : 'Connecter Phantom'}
+                        <FontAwesomeIcon icon={faWallet} /> {isPhantomConnected ? 'Phantom connected' : 'Connect Phantom'}
                       </Button>
                       
                       {verifiedWallet && (
                         <div className="verified-wallet-info">
                           <FontAwesomeIcon icon={faShield} className="verified-icon" />
-                          <span>Wallet principal vérifié: {verifiedWallet.slice(0, 6)}...{verifiedWallet.slice(-4)}</span>
+                          <span>Verified main wallet: {verifiedWallet.slice(0, 6)}...{verifiedWallet.slice(-4)}</span>
                         </div>
                       )}
                     </div>
@@ -693,7 +693,7 @@ const App: React.FC = () => {
                               <span className="currency-tag">{wallet.currency.toUpperCase()}</span>
                               <span className="wallet-address">{wallet.address}</span>
                               {wallet.verified && (
-                                <span className="verified-tag">Vérifié</span>
+                                <span className="verified-tag">Verified</span>
                               )}
                             </div>
                             <Button
@@ -736,7 +736,7 @@ const App: React.FC = () => {
                   <div className="step-content">
                     <h3>Create your link</h3>
                     <p className="step-description">
-                      Au moins un wallet doit être vérifié via Phantom. Les liens sont limités à une création par 5 minutes.
+                      At least one wallet must be verified via Phantom. Links are limited to one creation every 5 minutes.
                     </p>
                     
                     <Button 
